@@ -36,8 +36,6 @@ def handler():
         msg = request.form['msg']
         data = {'uuid': str(uuid4()), 'msg': msg}
         return requests.post(choice(available_services), data=data).text
-    else:
-        return '<h1>That request method is not supported</h1>'
 
 
 if __name__ == '__main__':
