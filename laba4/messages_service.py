@@ -16,6 +16,7 @@ def message_added(event):
     last_message = event.item
     messages.append(last_message)
     print(f'Received message: {last_message}')
+    msg_queue.remove(last_message)
 
 
 @app.route('/', methods=['GET'])
@@ -28,3 +29,4 @@ if __name__ == '__main__':
     msg_queue = client.get_queue('messages')
     msg_queue.add_listener(include_value=True, item_added_func=message_added)
     app.run(debug=True, port=args.port)
+    client.shutdown()
