@@ -1,5 +1,5 @@
 from flask import Flask, request
-from hazelcast import HazelcastClient
+import hazelcast
 import argparse
 import os
 import subprocess
@@ -11,6 +11,16 @@ parser.add_argument('--port', type=int)
 args = parser.parse_args()
 
 app = Flask(__name__)
+
+
+class HazelcastClient:
+
+    def __enter__(self):
+        self.client = hazelcast.HazelcastClient()
+        return self.client
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self.client.shutdown()
 
 
 def start_app():
@@ -36,15 +46,15 @@ def get_messages(client):
 
 @app.route('/', methods=['GET', 'POST'])
 def response():
-    if request.method == 'GET':
-        client = HazelcastClient()
-        return get_messages(client)
-    elif request.method == 'POST':
-        uuid, msg = request.form['uuid'], request.form['msg']
-        client = HazelcastClient()
-        put_message(client, uuid, msg)
-        print(f'New record:\n\tuuid: {uuid}\n\ttext: {msg}')
-        return 'Success'
+    with HazelcastClient() as client:
+        if request.method == 'GET':
+            messages = get_messages(client)
+            return messages
+        elif request.method == 'POST':
+            uuid, msg = request.form['uuid'], request.form['msg']
+            put_message(client, uuid, msg)
+            print(f'New record:\n\tuuid: {uuid}\n\ttext: {msg}')
+            return 'Success'
 
 
 if __name__ == '__main__':
